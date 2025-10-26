@@ -6,7 +6,7 @@ import TabunganDepositForm from '../components/tabungan/TabunganDepositForm'; //
 
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5027/api' : '/api';
+const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
 const API_URL = `${API_BASE_URL}/tabungan`;
 const Tabungan = () => {
     const [pendapatanSaldo, setPendapatanSaldo] = useState({ pokok: 0, laba: 0 });

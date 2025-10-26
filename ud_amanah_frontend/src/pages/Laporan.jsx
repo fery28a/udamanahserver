@@ -6,7 +6,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx';
 
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5027/api' : '/api';
+const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
 const API_URL = `${API_BASE_URL}/laporan`;
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';

@@ -9,7 +9,7 @@ import HutangPrincipalForm from '../components/hutang/HutangPrincipalForm';
 import HutangSettled from '../components/hutang/HutangSettled'; 
 import HutangActiveList from '../components/hutang/HutangActiveList'; 
 
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5027/api' : '/api';
+const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
 
 const API_URL = `${API_BASE_URL}/hutang`;
 const MASTER_DATA_API_URL = `${API_BASE_URL}/masterdata`;

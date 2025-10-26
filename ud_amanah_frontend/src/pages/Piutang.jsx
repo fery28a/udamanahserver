@@ -6,8 +6,7 @@ import PiutangActiveList from '../components/piutang/PiutangActiveList'; // Akan
 import PiutangSettled from '../components/piutang/PiutangSettled'; // Akan dibuat
 import PiutangPrincipalForm from '../components/piutang/PiutangPrincipalForm'; // Akan dibuat
 
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5027/api' : '/api';
-
+const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
 const API_URL = `${API_BASE_URL}/piutang`;
 const MASTER_DATA_API_URL = `${API_BASE_URL}/masterdata`;
 const PRIMARY_COLOR = 'var(--primary-color)';

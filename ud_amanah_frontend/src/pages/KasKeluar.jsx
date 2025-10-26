@@ -8,7 +8,7 @@ import KasKeluarTable from '../components/kaskeluar/KasKeluarTable';
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
 const DANGER_COLOR = '#dc3545';
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5027/api' : '/api';
+const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
 const API_URL = `${API_BASE_URL}/kaskeluar`;
 // Card Saldo Reusable
 const SaldoCard = ({ title, value, color }) => (

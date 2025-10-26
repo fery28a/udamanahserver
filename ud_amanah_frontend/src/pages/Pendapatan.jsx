@@ -7,7 +7,7 @@ import PendapatanTable from '../components/pendapatan/PendapatanTable';
 
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5027/api' : '/api';
+const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
 const API_URL = `${API_BASE_URL}/pendapatan`;
 // Card Ringkasan yang bersih
 const SummaryCard = ({ title, value, color }) => (
