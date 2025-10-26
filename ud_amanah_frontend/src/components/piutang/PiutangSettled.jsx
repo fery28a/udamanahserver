@@ -4,12 +4,15 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
+// FIX: Import API URL terpusat
+import { PIUTANG_URL } from "../../config/api"; 
 
-const API_URL = 'http://localhost:5027/api/piutang';
 const PRIMARY_COLOR = 'var(--primary-color)';
 const SUCCESS_COLOR = '#28a745';
 const ACCENT_COLOR = 'var(--accent-color)';
 
+// Komponen ini tidak lagi menerima piutangList sebagai props, 
+// melainkan mengambil data sendiri.
 const PiutangSettled = ({ formatRupiah }) => {
     const [settledList, setSettledList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,10 +22,12 @@ const PiutangSettled = ({ formatRupiah }) => {
         setLoading(true);
         try {
             const params = { month: filter.month, year: filter.year };
-            const response = await axios.get(`${API_URL}/settled`, { params });
+            // FIX: Gunakan PIUTANG_URL yang diimpor
+            const response = await axios.get(`${PIUTANG_URL}/settled`, { params });
             setSettledList(response.data);
         } catch (error) {
             console.error("Error fetching settled debt:", error);
+            // Anda mungkin ingin menampilkan pesan error di UI
             setSettledList([]);
         } finally {
             setLoading(false);
@@ -64,7 +69,7 @@ const PiutangSettled = ({ formatRupiah }) => {
         y += lineSpacing;
         doc.text(`TANGGAL AWAL PIUTANG: ${new Date(piutang.start_date).toLocaleDateString('id-ID')}`, 10, y);
         y += lineSpacing;
-        doc.text(`TANGGAL PELUNASAN: ${new Date(piutang.settlement_date).toLocaleDateString('id-ID')}`, 10, y);
+        doc.text(`TANGGAL PELUNASAN: ${new Date(piutang.settlement_date).toLocaleDateString('id-ID')}`, 10, y); 
         y += lineSpacing;
         doc.text("---------------------------------------------", 10, y);
         y += lineSpacing;
