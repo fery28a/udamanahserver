@@ -1,0 +1,50 @@
+/* ud_amanah_frontend/src/styles/Theme.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary-color: #0071ce;
+    --accent-color: #ffc220;
+    --background-light: #f4f7f9;
+    --text-dark: #333;
+    --text-light: #fff;
+    --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-dark);
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
+/* Base Button Style for Professional Look */
+button {
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    font-weight: 600;
+}
+button:hover {
+    filter: brightness(1.1);
+}
+
+/* Base Input Style */
+input[type="text"], input[type="number"], input[type="email"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.2s;
+}
+input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 113, 206, 0.2);
+}

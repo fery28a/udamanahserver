@@ -1,0 +1,9 @@
+# Direktori Dependencies Node
+node_modules/
+
+# File Environment
+ud_amanah_backend/.env
+
+# Build Folder (Frontend)
+ud_amanah_frontend/dist
+ud_amanah_frontend/build
