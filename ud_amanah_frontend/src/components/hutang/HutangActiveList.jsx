@@ -3,63 +3,97 @@
 import React from 'react';
 
 const PRIMARY_COLOR = 'var(--primary-color)';
-const ACCENT_COLOR = 'var(--accent-color)';
 const DANGER_COLOR = '#dc3545';
+const ACCENT_COLOR = 'var(--accent-color)';
+const SUCCESS_COLOR = '#28a745';
 
-const HutangActiveList = ({ hutangList, formatRupiah, onCicil, onEdit }) => {
-    if (hutangList.length === 0) {
-        return <p style={{ textAlign: 'center', padding: '20px', color: PRIMARY_COLOR }}>Tidak ada hutang aktif saat ini.</p>;
-    }
-
-    const formatDate = (date) => new Date(date).toLocaleDateString('id-ID');
-    const getDaysDifference = (start, end) => {
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+const HutangActiveList = ({ hutangList, formatRupiah, onCicil, onEdit, suppliers }) => {
+    
+    // FUNGSI UTILITY: Memastikan tanggal valid sebelum diformat (FIX UTAMA)
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        // Memeriksa apakah tanggal valid
+        if (isNaN(date.getTime())) return "Invalid Date";
+        return date.toLocaleDateString('id-ID');
     };
 
+    // Fungsi bantu untuk mendapatkan nama supplier
+    const getSupplierName = (supplierId) => {
+        const supplier = suppliers.find(s => s._id === supplierId);
+        return supplier ? supplier.nama : 'N/A';
+    };
+
+    if (hutangList.length === 0) {
+        return <p style={{ textAlign: 'center', padding: '20px' }}>Tidak ada Hutang Pokok yang aktif saat ini.</p>;
+    }
+
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {hutangList.map(hutang => {
-                const totalDays = getDaysDifference(new Date(hutang.start_date), new Date(hutang.due_date));
-                const daysRemaining = getDaysDifference(new Date(), new Date(hutang.due_date));
-                const daysPassed = totalDays - daysRemaining;
-                const recCicil = hutang.nominal_awal / totalDays;
-
-                return (
-                    <div key={hutang._id} style={{ padding: '20px', borderRadius: '12px', border: `1px solid ${DANGER_COLOR}`, backgroundColor: '#fff', boxShadow: 'var(--shadow-base)' }}>
-                        <h4 style={{ color: DANGER_COLOR, margin: '0 0 5px 0' }}>{hutang.transaction_number}</h4>
-                        <p style={{ margin: '0 0 15px 0', fontSize: '0.9em', color: '#666' }}>Supplier: <span style={{ fontWeight: '600' }}>{hutang.supplier_name}</span></p>
-
-                        <div style={{ marginBottom: '15px' }}>
-                            <p style={{ margin: '0', fontSize: '1.5em', fontWeight: '700', color: DANGER_COLOR }}>
-                                {formatRupiah(hutang.sisa_hutang)}
-                            </p>
-                            <small style={{ color: '#aaa' }}>Sisa Hutang dari {formatRupiah(hutang.nominal_awal)}</small>
-                        </div>
+        <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+                <thead>
+                    <tr style={{ backgroundColor: DANGER_COLOR, color: 'white' }}>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>Supplier</th>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>No. Transaksi</th>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>Tgl Hutang</th>
+                        <th style={{ padding: '10px', textAlign: 'left' }}>Jatuh Tempo</th>
+                        <th style={{ padding: '10px', textAlign: 'right' }}>Nominal Pokok</th>
+                        <th style={{ padding: '10px', textAlign: 'right' }}>Sisa Hutang</th>
+                        <th style={{ padding: '10px', textAlign: 'center' }}>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {hutangList.map(hutang => {
+                        const daysToDue = Math.ceil((new Date(hutang.due_date) - new Date()) / (1000 * 60 * 60 * 24));
+                        const isExpiring = daysToDue <= 30 && daysToDue > 0;
+                        const isOverdue = daysToDue <= 0;
                         
-                        <div style={{ fontSize: '0.9em', marginBottom: '15px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-                            <p style={{ margin: '0' }}>Awal: {formatDate(hutang.start_date)} | Jatuh Tempo: {formatDate(hutang.due_date)}</p>
-                            <p style={{ margin: '5px 0 0' }}>Sisa Hari: <span style={{ fontWeight: '700', color: daysRemaining < 7 ? DANGER_COLOR : PRIMARY_COLOR }}>{daysRemaining} hari</span></p>
-                            <p style={{ margin: '5px 0 0', fontWeight: '700' }}>Rekomendasi Cicilan/Hari: {formatRupiah(recCicil)}</p>
-                        </div>
+                        let rowStyle = { borderBottom: '1px solid #eee' };
+                        if (isOverdue) {
+                            rowStyle.backgroundColor = '#ffdddd'; // Merah Muda untuk Overdue
+                            rowStyle.fontWeight = 'bold';
+                        } else if (isExpiring) {
+                            rowStyle.backgroundColor = '#fffacd'; // Kuning Muda untuk Expiring
+                        }
 
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                            <button 
-                                onClick={() => onCicil(hutang)} 
-                                style={{ flex: 1, padding: '8px', backgroundColor: ACCENT_COLOR, color: PRIMARY_COLOR, border: 'none', borderRadius: '4px', fontWeight: '600' }}
-                            >
-                                Cicil Hutang
-                            </button>
-                            <button 
-                                onClick={() => onEdit(hutang)} 
-                                style={{ width: '80px', padding: '8px', backgroundColor: '#e9ecef', color: '#6c757d', border: 'none', borderRadius: '4px', fontWeight: '600' }}
-                            >
-                                Edit
-                            </button>
-                        </div>
-                    </div>
-                );
-            })}
+                        return (
+                            <tr key={hutang._id} style={rowStyle}>
+                                {/* Nama Supplier: Asumsi hutang.supplier_id sudah di-populate atau ID tersedia */}
+                                <td style={{ padding: '10px', fontWeight: 'bold' }}>{hutang.supplier_id?.nama || getSupplierName(hutang.supplier_id) || 'N/A'}</td>
+                                <td style={{ padding: '10px' }}>{hutang.transaction_number || hutang._id.slice(-6)}</td>
+                                
+                                {/* Tanggal Hutang (FIX: Menggunakan formatDate) */}
+                                <td style={{ padding: '10px' }}>{formatDate(hutang.date)}</td>
+                                
+                                {/* Tanggal Jatuh Tempo (FIX: Menggunakan formatDate) */}
+                                <td style={{ padding: '10px', color: isOverdue ? DANGER_COLOR : (isExpiring ? ACCENT_COLOR : '#333') }}>
+                                    {formatDate(hutang.due_date)}
+                                    {isOverdue && <span style={{ fontSize: '0.7em', display: 'block' }}>(Terlambat)</span>}
+                                </td>
+                                
+                                <td style={{ padding: '10px', textAlign: 'right' }}>{formatRupiah(hutang.nominal)}</td>
+                                <td style={{ padding: '10px', textAlign: 'right', color: DANGER_COLOR, fontWeight: 'bold' }}>
+                                    {formatRupiah(hutang.sisa_hutang)}
+                                </td>
+                                <td style={{ padding: '10px', textAlign: 'center', minWidth: '150px' }}>
+                                    <button 
+                                        onClick={() => onCicil(hutang)}
+                                        style={{ padding: '6px 10px', backgroundColor: SUCCESS_COLOR, color: 'white', border: 'none', borderRadius: '4px', marginRight: '5px' }}
+                                    >
+                                        Cicil
+                                    </button>
+                                    <button 
+                                        onClick={() => onEdit(hutang)}
+                                        style={{ padding: '6px 10px', backgroundColor: PRIMARY_COLOR, color: 'white', border: 'none', borderRadius: '4px' }}
+                                    >
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
         </div>
     );
 };
