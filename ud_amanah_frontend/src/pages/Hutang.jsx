@@ -9,13 +9,17 @@ import HutangPrincipalForm from '../components/hutang/HutangPrincipalForm';
 import HutangSettled from '../components/hutang/HutangSettled'; 
 import HutangActiveList from '../components/hutang/HutangActiveList'; 
 
-// --- PERUBAHAN: Import dari config/api ---
+// --- PERBAIKAN: Import dari config/api ---
 import { 
     HUTANG_URL, 
     getMasterDataUrl,
     getHutangPrincipalUrl, 
     getHutangPaymentUrl,
 } from '../config/api';
+
+// HAPUS URL HARDCODED LAMA
+// const API_URL = 'http://localhost:5027/api/hutang';
+// const MASTER_DATA_API_URL = 'http://localhost:5027/api/masterdata';
 
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
@@ -47,16 +51,17 @@ const Hutang = () => {
     // ===================================
     // 2. DATA FETCHING
     // ===================================
-    const fetchData = async () => {
-        setLoading(true);
+    
+    // Fungsi untuk mengambil data utama (Dashboard Hutang Aktif & Master Data)
+    const fetchActiveData = async () => {
         setError(null);
         try {
-            // 1. Ambil data hutang dashboard (saldo hutang, saldo tabungan map, saldo pendapatan)
-            const hutangResponse = await axios.get(`${API_URL}/dashboard`);
-            // 2. Ambil Master Tabungan (nama)
-            const tabunganMasterResponse = await axios.get(`${MASTER_DATA_API_URL}/tabungan`);
-            // 3. Ambil Master Supplier (nama)
-            const supplierResponse = await axios.get(`${MASTER_DATA_API_URL}/suppliers`); // <-- URL PLURAL YANG BENAR
+            // 1. Ambil data hutang dashboard (Menggunakan HUTANG_URL)
+            const hutangResponse = await axios.get(`${HUTANG_URL}/dashboard`);
+            // 2. Ambil Master Tabungan (Menggunakan getMasterDataUrl)
+            const tabunganMasterResponse = await axios.get(getMasterDataUrl('tabungan'));
+            // 3. Ambil Master Supplier (Menggunakan getMasterDataUrl)
+            const supplierResponse = await axios.get(getMasterDataUrl('suppliers'));
 
             setPendapatanSaldo(hutangResponse.data.pendapatanSaldo);
             setTabunganSaldoMap(hutangResponse.data.tabunganSaldoMap);
@@ -66,16 +71,18 @@ const Hutang = () => {
             setSupplierMasterList(supplierResponse.data);
 
         } catch (err) {
-            console.error("Error fetching data:", err);
-            setError("Gagal memuat dashboard Hutang. Cek koneksi backend/rute.");
-        } finally {
-            setLoading(false);
+            console.error("Error fetching active data:", err);
+            setError("Gagal memuat Hutang Aktif. Cek koneksi backend/rute.");
         }
     };
 
+    // Logika useEffect: Hanya perlu memanggil fetchActiveData() saat inisialisasi
+    // Data Lunas akan di-fetch oleh komponen HutangSettled.jsx sendiri.
     useEffect(() => {
-        fetchData();
-    }, []);
+        setLoading(true);
+        // Kita hanya fetch data aktif. HutangSettled.jsx akan fetch datanya sendiri saat tabnya aktif.
+        fetchActiveData().finally(() => setLoading(false));
+    }, []); 
 
     // ===================================
     // 3. HANDLERS (CRUD)
@@ -85,17 +92,17 @@ const Hutang = () => {
     const handlePrincipalSubmit = async (dataToSave, isEditing) => {
         try {
             if (isEditing) {
-                // UPDATE (PUT)
-                await axios.put(`${API_URL}/principal/${dataToSave._id}`, dataToSave);
+                // UPDATE (PUT) - Menggunakan getHutangPrincipalUrl
+                await axios.put(getHutangPrincipalUrl(dataToSave._id), dataToSave);
                 alert("Detail Hutang Pokok berhasil diperbarui!");
                 setEditPrincipal(null); // Tutup form
             } else {
-                // CREATE (POST)
-                await axios.post(`${API_URL}/principal`, dataToSave);
+                // CREATE (POST) - Menggunakan getHutangPrincipalUrl
+                await axios.post(getHutangPrincipalUrl(), dataToSave);
                 alert("Hutang baru berhasil dicatat!");
                 setIsFormActive(false);
             }
-            fetchData(); 
+            fetchActiveData(); // Refresh data aktif
         } catch (err) {
             console.error("Error saving principal:", err);
             alert(`Gagal mencatat hutang: ${err.response?.data?.message || 'Kesalahan Server'}`);
@@ -105,10 +112,11 @@ const Hutang = () => {
     // Handler untuk Pembayaran Cicilan
     const handleNewPayment = async (dataToSave) => {
         try {
-            await axios.post(`${API_URL}/payment`, dataToSave);
+            // Menggunakan getHutangPaymentUrl
+            await axios.post(getHutangPaymentUrl(), dataToSave);
             alert("Pembayaran berhasil dicatat!");
             setPayPrincipalData(null); // Tutup form
-            fetchData(); 
+            fetchActiveData(); // Refresh data aktif
         } catch (err) {
             console.error("Error saving payment:", err);
             alert(`Gagal mencatat pembayaran: ${err.response?.data?.message || 'Kesalahan Server'}`);
@@ -136,7 +144,7 @@ const Hutang = () => {
             name: master.nama,
             saldo: tabunganSaldoMap[master._id] || 0
         }))
-        .filter(opt => opt.saldo > 0); // Hanya tabungan yang bersaldo yang bisa dipakai bayar
+        .filter(opt => opt.saldo > 0); 
     
     const activePrincipalHutang = hutangList.filter(h => h.sisa_hutang > 0);
     const totalSisaHutang = activePrincipalHutang.reduce((sum, h) => sum + h.sisa_hutang, 0);
@@ -238,6 +246,7 @@ const Hutang = () => {
                             suppliers={supplierMasterList}
                         />
                     ) : (
+                        // HutangSettled.jsx sekarang mengambil data sendiri
                         <HutangSettled formatRupiah={formatRupiah} />
                     )
                 )}
