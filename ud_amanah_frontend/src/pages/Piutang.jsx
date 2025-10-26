@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import PiutangActiveList from '../components/piutang/PiutangActiveList'; // Akan dibuat
-import PiutangSettled from '../components/piutang/PiutangSettled'; // Akan dibuat
-import PiutangPrincipalForm from '../components/piutang/PiutangPrincipalForm'; // Akan dibuat
+import PiutangActiveList from '../components/piutang/PiutangActiveList'; 
+import PiutangSettled from '../components/piutang/PiutangSettled'; 
+import PiutangPrincipalForm from '../components/piutang/PiutangPrincipalForm'; 
 
 // --- PERUBAHAN: Import dari config/api ---
 import { PIUTANG_URL, getMasterDataUrl, getPiutangSettleUrl } from '../config/api';
@@ -14,7 +14,8 @@ const SUCCESS_COLOR = '#28a745'; // Warna hijau untuk Piutang
 
 const Piutang = () => {
     const [activeTab, setActiveTab] = useState('active'); 
-    const [piutangList, setPiutangList] = useState([]);
+    const [piutangList, setPiutangList] = useState([]); // Data Aktif
+    const [settledPiutangList, setSettledPiutangList] = useState([]); // <-- STATE BARU UNTUK DATA LUNAS
     const [customerMasterList, setCustomerMasterList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -23,31 +24,58 @@ const Piutang = () => {
 
     const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(number);
 
-    const fetchData = async () => {
-        setLoading(true);
+    // --- FUNGSI FETCH DATA AKTIF ---
+    const fetchActiveData = async () => {
         setError(null);
         try {
             // Menggunakan PIUTANG_URL untuk daftar piutang aktif
             const piutangResponse = await axios.get(PIUTANG_URL); 
-            // Menggunakan getMasterDataUrl untuk daftar customer
-            const customerResponse = await axios.get(getMasterDataUrl('customers'));
-
             setPiutangList(piutangResponse.data);
-            setCustomerMasterList(customerResponse.data);
-
         } catch (err) {
-            console.error("Error fetching data:", err);
-            setError("Gagal memuat Piutang. Cek koneksi backend/rute.");
-        } finally {
-            setLoading(false);
+            console.error("Error fetching active data:", err);
+            setError("Gagal memuat Piutang Aktif. Cek koneksi backend/rute.");
         }
     };
     
-    useEffect(() => {
-        if (activeTab === 'active') fetchData();
-    }, [activeTab]);
+    // --- FUNGSI FETCH DATA LUNAS (BARU) ---
+    const fetchSettledData = async () => {
+        setError(null);
+        try {
+            // Asumsi endpoint backend untuk data lunas adalah /api/piutang/settled
+            const settledResponse = await axios.get(`${PIUTANG_URL}/settled`);
+            setSettledPiutangList(settledResponse.data);
+        } catch (err) {
+            console.error("Error fetching settled data:", err);
+            setError("Gagal memuat Piutang Lunas. Cek koneksi backend/rute.");
+        }
+    };
+    
+    // --- FUNGSI FETCH MASTER DATA CUSTOMER ---
+    const fetchCustomerMaster = async () => {
+        try {
+             // Menggunakan getMasterDataUrl untuk daftar customer
+            const customerResponse = await axios.get(getMasterDataUrl('customers'));
+            setCustomerMasterList(customerResponse.data);
+        } catch (err) {
+            console.error("Error fetching customer master data:", err);
+            // Error ditangani oleh loading/error global
+        }
+    }
 
-    // Handler untuk Hutang Pokok Baru / Edit
+    // --- PERUBAHAN LOGIKA useEffect ---
+    useEffect(() => {
+        setLoading(true);
+        fetchCustomerMaster(); // Ambil data master
+        
+        if (activeTab === 'active') {
+            fetchActiveData().finally(() => setLoading(false));
+        } else if (activeTab === 'settled') {
+            fetchSettledData().finally(() => setLoading(false));
+        }
+    }, [activeTab]);
+    // --- AKHIR PERUBAHAN LOGIKA useEffect ---
+
+    // Handler untuk Piutang Pokok Baru / Edit
     const handlePrincipalSubmit = async (dataToSave, isEditing) => {
         // Construct URL menggunakan PIUTANG_URL
         const url = isEditing ? `${PIUTANG_URL}/${dataToSave._id}` : PIUTANG_URL;
@@ -58,7 +86,7 @@ const Piutang = () => {
             alert(`Piutang berhasil ${isEditing ? 'diperbarui' : 'dicatat'}!`);
             setIsFormActive(false);
             setEditData(null);
-            fetchData(); 
+            fetchActiveData(); // Refresh data aktif setelah submit
         } catch (err) {
             alert(`Gagal menyimpan: ${err.response?.data?.message || 'Kesalahan Server'}`);
         }
@@ -71,7 +99,7 @@ const Piutang = () => {
             // Menggunakan getPiutangSettleUrl()
             await axios.put(getPiutangSettleUrl(id));
             alert('Piutang berhasil dilunasi dan dipindahkan ke Piutang Lunas.');
-            fetchData();
+            fetchActiveData(); // Refresh data aktif
         } catch (err) {
             alert(`Gagal melunasi: ${err.response?.data?.message || 'Kesalahan Server'}`);
         }
@@ -82,7 +110,7 @@ const Piutang = () => {
         setIsFormActive(false);
     };
 
-    const totalActivePiutang = piutangList.reduce((sum, p) => sum + p.nominal, 0);
+    const totalActivePiutang = piutangList.reduce((sum, p) => sum + p.sisa_piutang, 0); // Asumsi sisa_piutang digunakan untuk total aktif
 
     const getTabButtonStyle = (tabName) => ({
         padding: '10px 15px', border: 'none', cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s',
@@ -104,7 +132,7 @@ const Piutang = () => {
             {/* Kotak Informasi dan Tombol Aksi */}
             <div style={{ display: 'flex', gap: '25px', marginBottom: '30px', marginTop: '20px' }}>
                 <div style={{ flex: 1, padding: '20px', borderRadius: '8px', boxShadow: 'var(--shadow-base)', backgroundColor: 'white', borderLeft: `5px solid ${SUCCESS_COLOR}` }}>
-                    <h4 style={{ margin: 0, color: '#666' }}>TOTAL PIUTANG AKTIF</h4>
+                    <h4 style={{ margin: 0, color: '#666' }}>TOTAL SISA PIUTANG AKTIF</h4>
                     <p style={{ fontSize: '1.8em', fontWeight: 'bold', margin: '5px 0 0', color: SUCCESS_COLOR }}>{formatRupiah(totalActivePiutang)}</p>
                 </div>
                 <button 
@@ -133,10 +161,10 @@ const Piutang = () => {
             {/* TAB NAVIGASI */}
             <div style={{ marginBottom: '0px', display: 'flex', gap: '0px' }}>
                 <button onClick={() => setActiveTab('active')} style={getTabButtonStyle('active')}>
-                    Piutang Aktif ({piutangList.length})
+                    Piutang Aktif ({piutangList.filter(p => p.sisa_piutang > 0).length})
                 </button>
                 <button onClick={() => setActiveTab('settled')} style={getTabButtonStyle('settled')}>
-                    Piutang Lunas
+                    Piutang Lunas ({settledPiutangList.length})
                 </button>
             </div>
 
@@ -146,13 +174,17 @@ const Piutang = () => {
                 {error && !loading ? <p style={{ color: SUCCESS_COLOR }}>{error}</p> : (
                     activeTab === 'active' ? (
                         <PiutangActiveList 
-                            piutangList={piutangList} 
+                            piutangList={piutangList.filter(p => p.sisa_piutang > 0)} 
                             formatRupiah={formatRupiah} 
                             onSettle={handleSettle}
                             onEdit={startEdit}
                         />
                     ) : (
-                        <PiutangSettled formatRupiah={formatRupiah} />
+                        // --- PERUBAHAN: Meneruskan data lunas ke komponen anak ---
+                        <PiutangSettled 
+                            piutangList={settledPiutangList} 
+                            formatRupiah={formatRupiah} 
+                        />
                     )
                 )}
             </div>
