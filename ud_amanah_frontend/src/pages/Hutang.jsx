@@ -25,8 +25,7 @@ const Hutang = () => {
     // ===================================
     // 1. STATE MANAGEMENT
     // ===================================
-    const [hutangList, setHutangList] = useState([]); // Data Aktif
-    const [settledHutangList, setSettledHutangList] = useState([]); // <-- STATE BARU UNTUK DATA LUNAS
+    const [hutangList, setHutangList] = useState([]);
     const [pendapatanSaldo, setPendapatanSaldo] = useState({ pokok: 0, laba: 0 });
     const [tabunganSaldoMap, setTabunganSaldoMap] = useState({});
     const [tabunganMasterList, setTabunganMasterList] = useState([]);
@@ -48,58 +47,35 @@ const Hutang = () => {
     // ===================================
     // 2. DATA FETCHING
     // ===================================
-    
-    // --- FUNGSI FETCH DATA AKTIF & DASHBOARD ---
-    const fetchActiveData = async () => {
+    const fetchData = async () => {
+        setLoading(true);
+        setError(null);
         try {
-            // 1. Ambil data hutang dashboard (aktif)
-            const hutangResponse = await axios.get(`${HUTANG_URL}/dashboard`);
-            
+            // 1. Ambil data hutang dashboard (saldo hutang, saldo tabungan map, saldo pendapatan)
+            const hutangResponse = await axios.get(`${API_URL}/dashboard`);
+            // 2. Ambil Master Tabungan (nama)
+            const tabunganMasterResponse = await axios.get(`${MASTER_DATA_API_URL}/tabungan`);
+            // 3. Ambil Master Supplier (nama)
+            const supplierResponse = await axios.get(`${MASTER_DATA_API_URL}/suppliers`); // <-- URL PLURAL YANG BENAR
+
             setPendapatanSaldo(hutangResponse.data.pendapatanSaldo);
             setTabunganSaldoMap(hutangResponse.data.tabunganSaldoMap);
             setHutangList(hutangResponse.data.hutangList);
-        } catch (err) {
-            console.error("Error fetching active data:", err);
-            setError("Gagal memuat dashboard Hutang Aktif. Cek koneksi backend/rute.");
-        }
-    };
-    
-    // --- FUNGSI FETCH DATA LUNAS (BARU) ---
-    const fetchSettledData = async () => {
-        try {
-            // Asumsi endpoint backend untuk data lunas adalah /api/hutang/settled
-            const settledResponse = await axios.get(`${HUTANG_URL}/settled`);
-            setSettledHutangList(settledResponse.data);
-        } catch (err) {
-            console.error("Error fetching settled data:", err);
-            setError("Gagal memuat Hutang Lunas. Cek koneksi backend/rute.");
-        }
-    };
-    
-    // --- FUNGSI FETCH MASTER DATA ---
-    const fetchMasterData = async () => {
-        try {
-            const tabunganMasterResponse = await axios.get(getMasterDataUrl('tabungan'));
-            const supplierResponse = await axios.get(getMasterDataUrl('suppliers')); 
+            
             setTabunganMasterList(tabunganMasterResponse.data);
             setSupplierMasterList(supplierResponse.data);
+
         } catch (err) {
-            console.error("Error fetching master data:", err);
-            setError("Gagal memuat data Master.");
+            console.error("Error fetching data:", err);
+            setError("Gagal memuat dashboard Hutang. Cek koneksi backend/rute.");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // --- LOGIKA useEffect UNTUK MENGAMBIL DATA SESUAI TAB ---
     useEffect(() => {
-        setLoading(true);
-        fetchMasterData();
-        
-        if (activeTab === 'active') {
-            fetchActiveData().finally(() => setLoading(false));
-        } else if (activeTab === 'settled') {
-            fetchSettledData().finally(() => setLoading(false));
-        }
-    }, [activeTab]); // Berjalan saat tab berubah
+        fetchData();
+    }, []);
 
     // ===================================
     // 3. HANDLERS (CRUD)
@@ -109,17 +85,17 @@ const Hutang = () => {
     const handlePrincipalSubmit = async (dataToSave, isEditing) => {
         try {
             if (isEditing) {
-                // UPDATE (PUT) - Menggunakan getHutangPrincipalUrl dengan ID
-                await axios.put(getHutangPrincipalUrl(dataToSave._id), dataToSave);
+                // UPDATE (PUT)
+                await axios.put(`${API_URL}/principal/${dataToSave._id}`, dataToSave);
                 alert("Detail Hutang Pokok berhasil diperbarui!");
                 setEditPrincipal(null); // Tutup form
             } else {
-                // CREATE (POST) - Menggunakan getHutangPrincipalUrl tanpa ID
-                await axios.post(getHutangPrincipalUrl(), dataToSave);
+                // CREATE (POST)
+                await axios.post(`${API_URL}/principal`, dataToSave);
                 alert("Hutang baru berhasil dicatat!");
                 setIsFormActive(false);
             }
-            fetchActiveData(); // Refresh data aktif
+            fetchData(); 
         } catch (err) {
             console.error("Error saving principal:", err);
             alert(`Gagal mencatat hutang: ${err.response?.data?.message || 'Kesalahan Server'}`);
@@ -129,11 +105,10 @@ const Hutang = () => {
     // Handler untuk Pembayaran Cicilan
     const handleNewPayment = async (dataToSave) => {
         try {
-            // Menggunakan getHutangPaymentUrl()
-            await axios.post(getHutangPaymentUrl(), dataToSave);
+            await axios.post(`${API_URL}/payment`, dataToSave);
             alert("Pembayaran berhasil dicatat!");
             setPayPrincipalData(null); // Tutup form
-            fetchActiveData(); // Refresh data aktif
+            fetchData(); 
         } catch (err) {
             console.error("Error saving payment:", err);
             alert(`Gagal mencatat pembayaran: ${err.response?.data?.message || 'Kesalahan Server'}`);
@@ -263,11 +238,7 @@ const Hutang = () => {
                             suppliers={supplierMasterList}
                         />
                     ) : (
-                        // --- PERUBAHAN: Meneruskan data lunas ke komponen anak ---
-                        <HutangSettled 
-                            hutangList={settledHutangList} 
-                            formatRupiah={formatRupiah} 
-                        />
+                        <HutangSettled formatRupiah={formatRupiah} />
                     )
                 )}
             </div>
