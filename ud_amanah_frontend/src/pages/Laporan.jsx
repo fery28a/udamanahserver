@@ -6,8 +6,9 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx';
 
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-const API_URL = `${API_BASE_URL}/laporan`;
+// --- PERUBAHAN: Import dari config/api ---
+import { LAPORAN_URL } from '../config/api';
+
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
 const DANGER_COLOR = '#dc3545';
@@ -40,7 +41,8 @@ const Laporan = () => {
         setError(null);
         try {
             const params = { month: filter.month, year: filter.year };
-            const response = await axios.get(`${API_URL}/${selectedReport}`, { params });
+            // Menggunakan LAPORAN_URL
+            const response = await axios.get(`${LAPORAN_URL}/${selectedReport}`, { params });
             
             // FIX PENTING: Mengakses response.data.data (properti yang disepakati di backend)
             setReportData(response.data.data); 

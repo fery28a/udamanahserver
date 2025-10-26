@@ -9,10 +9,14 @@ import HutangPrincipalForm from '../components/hutang/HutangPrincipalForm';
 import HutangSettled from '../components/hutang/HutangSettled'; 
 import HutangActiveList from '../components/hutang/HutangActiveList'; 
 
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-
-const API_URL = `${API_BASE_URL}/hutang`;
-const MASTER_DATA_API_URL = `${API_BASE_URL}/masterdata`;
+// --- PERUBAHAN: Import dari config/api ---
+import { 
+    HUTANG_URL, 
+    MASTER_DATA_URL,
+    getHutangPrincipalUrl, 
+    getHutangPaymentUrl,
+    getMasterDataUrl
+} from '../config/api';
 
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
@@ -48,12 +52,12 @@ const Hutang = () => {
         setLoading(true);
         setError(null);
         try {
-            // 1. Ambil data hutang dashboard (saldo hutang, saldo tabungan map, saldo pendapatan)
-            const hutangResponse = await axios.get(`${API_URL}/dashboard`);
-            // 2. Ambil Master Tabungan (nama)
-            const tabunganMasterResponse = await axios.get(`${MASTER_DATA_API_URL}/tabungan`);
-            // 3. Ambil Master Supplier (nama)
-            const supplierResponse = await axios.get(`${MASTER_DATA_API_URL}/suppliers`); // <-- URL PLURAL YANG BENAR
+            // 1. Ambil data hutang dashboard
+            const hutangResponse = await axios.get(`${HUTANG_URL}/dashboard`);
+            // 2. Ambil Master Tabungan
+            const tabunganMasterResponse = await axios.get(getMasterDataUrl('tabungan'));
+            // 3. Ambil Master Supplier
+            const supplierResponse = await axios.get(getMasterDataUrl('suppliers'));
 
             setPendapatanSaldo(hutangResponse.data.pendapatanSaldo);
             setTabunganSaldoMap(hutangResponse.data.tabunganSaldoMap);
@@ -82,13 +86,13 @@ const Hutang = () => {
     const handlePrincipalSubmit = async (dataToSave, isEditing) => {
         try {
             if (isEditing) {
-                // UPDATE (PUT)
-                await axios.put(`${API_URL}/principal/${dataToSave._id}`, dataToSave);
+                // UPDATE (PUT) - Menggunakan getHutangPrincipalUrl dengan ID
+                await axios.put(getHutangPrincipalUrl(dataToSave._id), dataToSave);
                 alert("Detail Hutang Pokok berhasil diperbarui!");
                 setEditPrincipal(null); // Tutup form
             } else {
-                // CREATE (POST)
-                await axios.post(`${API_URL}/principal`, dataToSave);
+                // CREATE (POST) - Menggunakan getHutangPrincipalUrl tanpa ID
+                await axios.post(getHutangPrincipalUrl(), dataToSave);
                 alert("Hutang baru berhasil dicatat!");
                 setIsFormActive(false);
             }
@@ -102,7 +106,8 @@ const Hutang = () => {
     // Handler untuk Pembayaran Cicilan
     const handleNewPayment = async (dataToSave) => {
         try {
-            await axios.post(`${API_URL}/payment`, dataToSave);
+            // Menggunakan getHutangPaymentUrl()
+            await axios.post(getHutangPaymentUrl(), dataToSave);
             alert("Pembayaran berhasil dicatat!");
             setPayPrincipalData(null); // Tutup form
             fetchData(); 

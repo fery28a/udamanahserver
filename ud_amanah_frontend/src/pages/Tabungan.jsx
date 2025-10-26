@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TabunganDepositForm from '../components/tabungan/TabunganDepositForm'; // Akan dibuat
 
+// --- PERUBAHAN: Import dari config/api ---
+import { TABUNGAN_URL, getTabunganDashboardUrl } from '../config/api';
+
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-const API_URL = `${API_BASE_URL}/tabungan`;
+
 const Tabungan = () => {
     const [pendapatanSaldo, setPendapatanSaldo] = useState({ pokok: 0, laba: 0 });
     const [tabunganList, setTabunganList] = useState([]);
@@ -21,7 +23,8 @@ const Tabungan = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_URL}/dashboard`);
+            // Menggunakan getTabunganDashboardUrl()
+            const response = await axios.get(getTabunganDashboardUrl());
             setPendapatanSaldo(response.data.pendapatanSaldo);
             setTabunganList(response.data.tabunganList);
         } catch (err) {
@@ -39,8 +42,8 @@ const Tabungan = () => {
     // --- Deposit Handler ---
     const handleDeposit = async (data) => {
         try {
-            // Data dikirim ke endpoint deposit
-            await axios.post(`${API_URL}/deposit`, data);
+            // Data dikirim ke endpoint deposit menggunakan TABUNGAN_URL
+            await axios.post(`${TABUNGAN_URL}/deposit`, data);
             alert(`Deposit sebesar ${formatRupiah(data.nominal)} berhasil.`);
             fetchData(); // Refresh data setelah deposit
         } catch (err) {

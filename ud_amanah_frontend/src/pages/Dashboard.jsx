@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 // HAPUS SEMUA IMPORTS CHART.JS
 
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-const API_URL = `${API_BASE_URL}/dashboard`;
+// --- BARIS PERUBAHAN: Import dari config/api ---
+import { DASHBOARD_URL } from '../config/api'; 
+
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
 const DANGER_COLOR = '#dc3545';
@@ -22,7 +23,8 @@ const Dashboard = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(API_URL);
+            // --- PERUBAHAN: Menggunakan DASHBOARD_URL ---
+            const response = await axios.get(DASHBOARD_URL); 
             setData(response.data);
         } catch (err) {
             console.error("Error fetching dashboard data:", err);

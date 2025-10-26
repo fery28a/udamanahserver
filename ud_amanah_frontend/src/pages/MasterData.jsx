@@ -8,11 +8,13 @@ import SupplierForm from '../components/masterdata/SupplierForm';
 import CustomerForm from '../components/masterdata/CustomerForm';
 import TabunganForm from '../components/masterdata/TabunganForm';
 
+// --- PERUBAHAN: Import dari config/api ---
+import { MASTER_DATA_URL } from '../config/api';
+
 // Konstanta Warna Tema
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-const API_URL = `${API_BASE_URL}/masterdata`;
+
 
 const MasterData = () => {
     const [activeMenu, setActiveMenu] = useState('Supplier'); 
@@ -26,12 +28,13 @@ const MasterData = () => {
     const fetchData = async (endpoint, setData) => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/${endpoint}`);
+            // Menggunakan MASTER_DATA_URL
+            const response = await axios.get(`${MASTER_DATA_URL}/${endpoint}`);
             setData(response.data);
             setError(null);
         } catch (err) {
             console.error(`Error fetching ${endpoint}:`, err);
-            setError(`Gagal mengambil data ${endpoint}. Pastikan backend berjalan di ${API_URL}`);
+            setError(`Gagal mengambil data ${endpoint}. Pastikan backend berjalan di ${MASTER_DATA_URL}`);
         } finally {
             setLoading(false);
         }
@@ -58,7 +61,8 @@ const MasterData = () => {
         else if (activeMenu === 'Tabungan Masterdata') { endpoint = 'tabungan'; }
         if (!endpoint) return; 
 
-        const url = isEditing ? `${API_URL}/${endpoint}/${data._id}` : `${API_URL}/${endpoint}`;
+        // Menggunakan MASTER_DATA_URL
+        const url = isEditing ? `${MASTER_DATA_URL}/${endpoint}/${data._id}` : `${MASTER_DATA_URL}/${endpoint}`;
         const method = isEditing ? 'put' : 'post'; 
 
         try {
@@ -88,7 +92,8 @@ const MasterData = () => {
         if (!endpoint) return;
         if (!window.confirm(`Yakin ingin menghapus data ${activeMenu} ID: ${id}?`)) return;
 
-        const url = `${API_URL}/${endpoint}/${id}`;
+        // Menggunakan MASTER_DATA_URL
+        const url = `${MASTER_DATA_URL}/${endpoint}/${id}`;
 
         try {
             await axios.delete(url);

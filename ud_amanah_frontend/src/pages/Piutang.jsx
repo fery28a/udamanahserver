@@ -6,9 +6,9 @@ import PiutangActiveList from '../components/piutang/PiutangActiveList'; // Akan
 import PiutangSettled from '../components/piutang/PiutangSettled'; // Akan dibuat
 import PiutangPrincipalForm from '../components/piutang/PiutangPrincipalForm'; // Akan dibuat
 
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-const API_URL = `${API_BASE_URL}/piutang`;
-const MASTER_DATA_API_URL = `${API_BASE_URL}/masterdata`;
+// --- PERUBAHAN: Import dari config/api ---
+import { PIUTANG_URL, getMasterDataUrl, getPiutangSettleUrl } from '../config/api';
+
 const PRIMARY_COLOR = 'var(--primary-color)';
 const SUCCESS_COLOR = '#28a745'; // Warna hijau untuk Piutang
 
@@ -27,8 +27,10 @@ const Piutang = () => {
         setLoading(true);
         setError(null);
         try {
-            const piutangResponse = await axios.get(API_URL); // GET /api/piutang/ (Active)
-            const customerResponse = await axios.get(`${MASTER_DATA_API_URL}/customers`);
+            // Menggunakan PIUTANG_URL untuk daftar piutang aktif
+            const piutangResponse = await axios.get(PIUTANG_URL); 
+            // Menggunakan getMasterDataUrl untuk daftar customer
+            const customerResponse = await axios.get(getMasterDataUrl('customers'));
 
             setPiutangList(piutangResponse.data);
             setCustomerMasterList(customerResponse.data);
@@ -47,7 +49,8 @@ const Piutang = () => {
 
     // Handler untuk Hutang Pokok Baru / Edit
     const handlePrincipalSubmit = async (dataToSave, isEditing) => {
-        const url = isEditing ? `${API_URL}/${dataToSave._id}` : API_URL;
+        // Construct URL menggunakan PIUTANG_URL
+        const url = isEditing ? `${PIUTANG_URL}/${dataToSave._id}` : PIUTANG_URL;
         const method = isEditing ? 'put' : 'post';
         
         try {
@@ -65,7 +68,8 @@ const Piutang = () => {
     const handleSettle = async (id) => {
         if (!window.confirm("Yakin menandai Piutang ini LUNAS?")) return;
         try {
-            await axios.put(`${API_URL}/settle/${id}`);
+            // Menggunakan getPiutangSettleUrl()
+            await axios.put(getPiutangSettleUrl(id));
             alert('Piutang berhasil dilunasi dan dipindahkan ke Piutang Lunas.');
             fetchData();
         } catch (err) {

@@ -5,10 +5,12 @@ import axios from 'axios';
 import PendapatanForm from '../components/pendapatan/PendapatanForm'; 
 import PendapatanTable from '../components/pendapatan/PendapatanTable'; 
 
+// --- PERUBAHAN: Import dari config/api ---
+import { PENDAPATAN_URL } from '../config/api';
+
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-const API_URL = `${API_BASE_URL}/pendapatan`;
+
 // Card Ringkasan yang bersih
 const SummaryCard = ({ title, value, color }) => (
     <div 
@@ -46,8 +48,8 @@ const Pendapatan = () => {
                 month: filter.month,
                 year: filter.year
             };
-            // Ambil semua data dan saldo NET
-            const response = await axios.get(API_URL, { params }); 
+            // Menggunakan PENDAPATAN_URL
+            const response = await axios.get(PENDAPATAN_URL, { params }); 
             
             // Filter transaksi yang ditampilkan berdasarkan activeType (hanya di frontend)
             const filteredTx = response.data.transactions.filter(tx => tx.type === activeType);
@@ -70,7 +72,8 @@ const Pendapatan = () => {
     // --- CRUD Handlers (sama seperti sebelumnya) ---
     const handleSave = async (data) => {
         const payload = { ...data, type: activeType, date: new Date(data.date) };
-        const url = editData ? `${API_URL}/${editData._id}` : API_URL;
+        // Menggunakan PENDAPATAN_URL
+        const url = editData ? `${PENDAPATAN_URL}/${editData._id}` : PENDAPATAN_URL;
         const method = editData ? 'put' : 'post';
         try {
             await axios[method](url, payload);
@@ -86,7 +89,8 @@ const Pendapatan = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Yakin ingin menghapus transaksi ini?")) return;
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            // Menggunakan PENDAPATAN_URL
+            await axios.delete(`${PENDAPATAN_URL}/${id}`);
             alert('Transaksi berhasil dihapus.');
             fetchData(); 
         } catch (err) {

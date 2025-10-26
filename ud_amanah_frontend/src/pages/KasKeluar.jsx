@@ -5,11 +5,13 @@ import axios from 'axios';
 import KasKeluarForm from '../components/kaskeluar/KasKeluarForm'; 
 import KasKeluarTable from '../components/kaskeluar/KasKeluarTable'; 
 
+// --- PERUBAHAN: Import dari config/api ---
+import { KASKELUAR_URL, getKasKeluarDashboardUrl } from '../config/api';
+
 const PRIMARY_COLOR = 'var(--primary-color)';
 const ACCENT_COLOR = 'var(--accent-color)';
 const DANGER_COLOR = '#dc3545';
-const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:8084/api' : '/api';
-const API_URL = `${API_BASE_URL}/kaskeluar`;
+
 // Card Saldo Reusable
 const SaldoCard = ({ title, value, color }) => (
     <div style={{ padding: '15px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', backgroundColor: 'white', borderLeft: `5px solid ${color}`, minWidth: '220px', flexShrink: 0 }}>
@@ -36,7 +38,8 @@ const KasKeluar = () => {
         setError(null);
         try {
             const params = { month: filter.month, year: filter.year };
-            const response = await axios.get(`${API_URL}/dashboard`, { params });
+            // Menggunakan getKasKeluarDashboardUrl()
+            const response = await axios.get(getKasKeluarDashboardUrl(), { params });
 
             setTransactions(response.data.transactions);
             setPendapatanSaldo(response.data.pendapatanSaldo);
@@ -57,7 +60,8 @@ const KasKeluar = () => {
     // --- CRUD Handlers ---
     const handleSave = async (data) => {
         const payload = { ...data, date: new Date(data.date) };
-        const url = editData ? `${API_URL}/${editData._id}` : `${API_URL}/`;
+        // Menggunakan KASKELUAR_URL
+        const url = editData ? `${KASKELUAR_URL}/${editData._id}` : `${KASKELUAR_URL}/`;
         const method = editData ? 'put' : 'post';
 
         try {
@@ -73,7 +77,8 @@ const KasKeluar = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Yakin ingin menghapus transaksi ini?")) return;
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            // Menggunakan KASKELUAR_URL
+            await axios.delete(`${KASKELUAR_URL}/${id}`);
             alert('Transaksi berhasil dihapus.');
             fetchData(); // Refresh data
         } catch (err) {
