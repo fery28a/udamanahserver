@@ -4,29 +4,37 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
-// FIX: Import API URL terpusat
 import { HUTANG_URL } from "../../config/api"; 
 
 const PRIMARY_COLOR = 'var(--primary-color)';
 const DANGER_COLOR = '#dc3545';
 const ACCENT_COLOR = 'var(--accent-color)';
 
-// Komponen ini mengambil data sendiri
 const HutangSettled = ({ formatRupiah }) => {
     const [settledList, setSettledList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear() });
 
+    // Fungsi utilitas untuk memformat tanggal secara aman (FIX UTAMA)
+    const safeDateFormatter = (dateString) => {
+        if (!dateString) {
+            return "N/A"; // Jika data kosong/null
+        }
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return "Invalid Date"; // Jika string tanggal tidak dapat diparse
+        }
+        return date.toLocaleDateString('id-ID');
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
             const params = { month: filter.month, year: filter.year };
-            // FIX: Gunakan HUTANG_URL yang diimpor
             const response = await axios.get(`${HUTANG_URL}/settled`, { params });
             setSettledList(response.data);
         } catch (error) {
             console.error("Error fetching settled debt:", error);
-            // Menampilkan pesan error di UI jika diperlukan
             setSettledList([]);
         } finally {
             setLoading(false);
@@ -41,7 +49,7 @@ const HutangSettled = ({ formatRupiah }) => {
         setFilter({ ...filter, [e.target.name]: e.target.value });
     };
 
-    // Fungsi Cetak Bukti Bayar Hutang (Adaptasi dari Piutang)
+    // Fungsi Cetak Bukti Bayar Hutang
     const printSettlement = (hutang) => {
         const doc = new jsPDF();
         const yStart = 20;
@@ -62,16 +70,19 @@ const HutangSettled = ({ formatRupiah }) => {
 
         // Detail Transaksi
         doc.setFontSize(10);
-        // Asumsi supplier_id sudah di-populate
         doc.text(`SUPPLIER: ${hutang.supplier_id?.nama || 'N/A'}`, 10, y); 
         y += lineSpacing;
         doc.text(`NO. TRANSAKSI: ${hutang.transaction_number || hutang._id}`, 10, y);
         y += lineSpacing;
-        doc.text(`TANGGAL HUTANG: ${new Date(hutang.date).toLocaleDateString('id-ID')}`, 10, y);
+        
+        // FIX: Gunakan safeDateFormatter
+        doc.text(`TANGGAL HUTANG: ${safeDateFormatter(hutang.date)}`, 10, y);
         y += lineSpacing;
-        // Asumsi properti lunas adalah 'settled_date'
-        doc.text(`TANGGAL PELUNASAN: ${new Date(hutang.settled_date || hutang.date).toLocaleDateString('id-ID')}`, 10, y); 
+        
+        // FIX: Gunakan safeDateFormatter untuk tanggal pelunasan
+        doc.text(`TANGGAL PELUNASAN: ${safeDateFormatter(hutang.settled_date)}`, 10, y); 
         y += lineSpacing;
+        
         doc.text("---------------------------------------------", 10, y);
         y += lineSpacing;
 
